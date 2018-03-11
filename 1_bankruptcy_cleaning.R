@@ -2,6 +2,7 @@
 # Data Source:
 #    https://archive.ics.uci.edu/ml/datasets/Polish+companies+bankruptcy+data
 #----------------------------------------------------------------------------
+myseed = 2018
 
 #-----------------------------------------------------
 # Step 1: Loading of database
@@ -57,7 +58,7 @@ df_combined$Attr21[is.na(df_combined$Attr21)] <- 0
 df_combined$Attr27[is.na(df_combined$Attr27)] <- 0
 
 # Remove column Attr37 and Attr45
-df_combined <- subset(df_combined, select=-c(Attr21,Attr27))
+df_combined <- subset(df_combined, select=-c(Attr37,Attr45))
 colnames(df_combined)
 
 
@@ -71,19 +72,26 @@ df_cor
 library(corrplot)
 corrplot(df_cor, type="upper")
 
+#install.packages("caret")
 library(caret)
 hc <- findCorrelation(df_cor, cutoff=0.8, verbose = T)
 hc = sort(hc)
 hc
-# Due to high correlation, these columns are recommended to be removed:
-#          2  4  6  7  8 10 11 13 14 18 19 20 21 22 24 26 28 29 31 32 33 34 36 40 41 42 44 47 50 54 56 60 61
-# According to Subject Matter Expert, these are the attributes number to be removed:
-#          4 9 11 12 13 14 22 24 25 26 28 31 33 35 39 40 42 48 49 50 51 53 54 56 64
-# We will clean up the dataset using these 2 different ways
+# - Due to high correlation, these <<columns>> are recommended to be removed:
+#   2  3  4  7  9 10 11 12 13 14 16 17 19 20 22 23 25 30 31 33 34 36 37
+#   42 43 44 45 46 47 50 51 52 54 56 61 62
+#
+# - According to Subject Matter Expert, these are the <<attribute number>> to be removed:
+#   4 9 11 12 13 14 22 24 25 26 28 31 33 35 39 40 42 48 49 50 51 53 54 56 64
+# 
+# - We will clean up the dataset using these 2 different ways
 
 
 #-----------------------------------------------------------
-# Step 5: Remove some columns
+# Step 5: Remove some columns using
+#         - correlation
+#         - subject matter expert view
+# Note: PCA is not allowed in this assignment.
 #-----------------------------------------------------------
 # Case 1: Remove columns based on high correlation
 df_reduced_using_cor <- df_combined[, -hc]
@@ -102,21 +110,19 @@ colnames(df_reduced_using_expert)
 #       : Note that it will take some time to run
 #--------------------------------------------------
 # Case 1
+set.seed(myseed)
 df_imputed_using_cor <- kNN(df_reduced_using_cor, imp_var = FALSE)
 df_train_cor <- df_imputed_using_cor[1:totalrows_train, ]
 df_test_cor  <- df_imputed_using_cor[(totalrows_train+1):nrow(df_imputed_using_cor) , ]
 
-write.csv(x = df_train_cor, file = "train_corr.csv", row.names = FALSE)
-write.csv(x = df_test_cor, file = "test_corr.csv", row.names = FALSE)
+write.csv(x = df_train_cor, file = "cleaned_data/train_corr.csv", row.names = FALSE)
+write.csv(x = df_test_cor,  file = "cleaned_data/test_corr.csv" , row.names = FALSE)
 
 # Case 2
+set.seed(myseed)
 df_imputed_using_expert <- kNN(df_reduced_using_cor, imp_var = FALSE)
 df_train_expert <- df_imputed_using_expert[1:totalrows_train, ]
 df_test_expert  <- df_imputed_using_expert[(totalrows_train+1):nrow(df_imputed_using_expert) , ]
 
-write.csv(x = df_train_expert, file = "train_expert.csv", row.names = FALSE)
-write.csv(x = df_test_expert, file = "test_expert.csv", row.names = FALSE)
-
-
-
-
+write.csv(x = df_train_expert, file = "cleaned_data/train_expert.csv", row.names = FALSE)
+write.csv(x = df_test_expert, file = "cleaned_data/test_expert.csv", row.names = FALSE)
